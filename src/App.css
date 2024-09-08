@@ -1,38 +1,452 @@
-.App {
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root {
+  --color-darkest: #000814;
+  --color-dark: #001d3d;
+  --color-medium: #003566;
+  --color-light: #ffc300;
+  --color-lightest: #ffd60a;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-darkest);
+  color: var(--color-lightest);
+}
+
+.fullscreen {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+.game-background {
+  background: linear-gradient(135deg, var(--color-darkest) 0%, var(--color-dark) 100%);
+  color: var(--color-lightest);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.content-container {
+  position: relative;
+  z-index: 2;
+  background-color: rgba(0, 53, 102, 0.7);
+  padding: 1.5rem;  /* Reduced padding */
+  max-width: 300px;  /* Reduced max-width */
+  width: 90%;  /* Adjusted width for smaller screens */
   text-align: center;
+  box-shadow: 0 8px 32px 0 rgba(0, 29, 61, 0.37);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 195, 0, 0.18);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.menu-container {
+  transform: translateY(0);
+  animation: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+@keyframes float {
+  0% { transform: translateY(-10px); }
+  50% { transform: translateY(0px); }
+  100% { transform: translateY(-10px); }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.game-title {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 3rem;
+  color: var(--color-lightest);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.game-title .world-icon {
+  font-size: 0.8em;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.section-title {
+  font-size: 2rem;
+  color: var(--color-light);
+  margin-bottom: 1.5rem;
+}
+
+.game-text {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--color-lightest);
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;  /* Reduced gap between buttons */
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.game-button {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;  /* Slightly smaller font size */
+  padding: 0.6rem 1.2rem;  /* Reduced padding */
+  background-color: var(--color-light);
+  color: var(--color-darkest);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.game-button:hover {
+  background-color: var(--color-lightest);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.game-button.small {
+  font-size: 1rem;
+  padding: 0.6rem 1rem;
+}
+
+.game-button.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.game-input {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 300px;
+  border: 2px solid var(--color-light);
+  border-radius: 50px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-lightest);
+  transition: all 0.3s ease;
+}
+
+.game-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 195, 0, 0.5);
+}
+
+.game-ui {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px; /* Reduced from 300px */
+  background-color: rgba(0, 29, 61, 0.9); /* Increased opacity for better readability */
+  padding: 1rem; /* Increased padding for more space */
+  border-radius: 15px; /* Slightly reduced border radius */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: flex-start;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px 0 rgba(0, 8, 20, 0.37);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 195, 0, 0.18);
+  z-index: 1000;
 }
 
-.App-link {
-  color: #61dafb;
+.game-ui .section-title {
+  font-size: 1.1rem; /* Reduced font size */
+  margin-bottom: 1rem; /* Increased margin for more space after the title */
+  white-space: nowrap;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.game-ui .game-stats {
+  font-size: 0.9rem; /* Reduced font size */
+  margin-bottom: 0.4rem; /* Added margin */
+}
+
+.game-ui .game-input {
+  font-size: 0.9rem;
+  padding: 0.5rem; /* Reduced padding */
+}
+
+.game-ui .game-button {
+  font-size: 0.9rem; /* Reduced font size */
+  padding: 0.5rem 0.8rem; /* Reduced padding */
+}
+
+.game-ui .result {
+  font-size: 0.9rem; /* Reduced font size */
+  margin-bottom: 0.4rem; /* Reduced margin */
+  padding: 0.4rem 0.8rem; /* Reduced padding */
+}
+
+.game-stats {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-light);
+}
+
+.game-stats .lives {
+  display: flex;
+  align-items: center;
+}
+
+.game-stats .lives::before {
+  content: 'Lives: ';
+  margin-right: 5px;
+}
+
+.result {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 195, 0, 0.2);
+  border-radius: 50px;
+  color: var(--color-lightest);
+}
+
+.street-view-container {
+  position: absolute;
+  top: -80px; /* Increased from -60px */
+  left: -80px; /* Increased from -60px */
+  right: -60px;
+  bottom: -60px;
+  overflow: hidden;
+}
+
+.street-view-container iframe {
+  width: calc(100% + 140px); /* Increased from 120px */
+  height: calc(100% + 140px); /* Increased from 120px */
+  border: none;
+  pointer-events: none; /* Prevents user interaction */
+}
+
+/* Remove or comment out the .street-view-overlay styles if you no longer need them */
+/*
+.street-view-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.street-view-overlay::before,
+.street-view-overlay::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 29, 61, 0.5);
+}
+
+.street-view-overlay::before {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+}
+
+.street-view-overlay::after {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+}
+
+.street-view-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 100%;
+  background: rgba(0, 29, 61, 0.5);
+}
+*/
+.world-icon {
+  font-size: 0.9em;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.game-title .world-icon {
+  font-size: 0.7em;
+}
+
+.game-button.full-width {
+  width: calc(100% - 1rem); /* Adjust width to match input */
+}
+
+.guess-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-input {
+  width: calc(100% - 1rem);
+  margin-bottom: 0.8rem; /* Increased margin for more space between input and button */
+}
+
+/* Add these new styles */
+.menu-street-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.menu-street-view::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 29, 61, 0.8); /* Increased opacity for darker overlay */
+  backdrop-filter: blur(10px); /* Increased blur effect */
+  -webkit-backdrop-filter: blur(10px); /* For Safari support */
+  z-index: 1;
+}
+
+.menu-street-view iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Add this new style for more compact buttons on smaller screens */
+@media (max-height: 600px) {
+  .game-button {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .button-container {
+    gap: 0.6rem;
   }
 }
+
+@media (max-width: 350px) {
+  .game-title {
+    font-size: 2rem;  /* Even smaller font size for very small screens */
+  }
+}
+
+/* Add these new styles for the leaderboard */
+.leaderboard-container {
+  background-color: rgba(0, 29, 61, 0.9);
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh; /* Set a maximum height */
+  margin: 0 auto;
+  box-shadow: 0 8px 32px 0 rgba(0, 8, 20, 0.37);
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-scroll {
+  overflow-y: auto; /* Make this container scrollable */
+  margin-bottom: 1rem; /* Add some space before the button */
+  flex-grow: 1;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 1rem;
+  text-align: left;
+}
+
+.leaderboard-table th {
+  background-color: var(--color-medium);
+  color: var(--color-lightest);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.leaderboard-table tr {
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.leaderboard-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.leaderboard-table td:first-child,
+.leaderboard-table th:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.leaderboard-table td:last-child,
+.leaderboard-table th:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+/* Add styles for the scrollbar */
+.leaderboard-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.leaderboard-scroll::-webkit-scrollbar-track {
+  background: var(--color-dark);
+  border-radius: 5px;
+}
+
+.leaderboard-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-medium);
+  border-radius: 5px;
+}
+
+.leaderboard-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-light);
+}
+
+.leaderboard-rank {
+  font-weight: bold;
+  color: var(--color-light);
+}
+
+.leaderboard-date {
+  font-size: 0.9em;
+  color: var(--color-light);
+}
+
+/* Remove or comment out this class
+.leaderboard-score {
+  font-weight: bold;
+  color: var(--color-lightest);
+}
+*/
