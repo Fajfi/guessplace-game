@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/guessplace-game/static/css/main.ebebdc3b.css",
+    "main.js": "/guessplace-game/static/js/main.db5bdbe2.js",
+    "static/js/453.f8bb2471.chunk.js": "/guessplace-game/static/js/453.f8bb2471.chunk.js",
+    "index.html": "/guessplace-game/index.html",
+    "main.ebebdc3b.css.map": "/guessplace-game/static/css/main.ebebdc3b.css.map",
+    "main.db5bdbe2.js.map": "/guessplace-game/static/js/main.db5bdbe2.js.map",
+    "453.f8bb2471.chunk.js.map": "/guessplace-game/static/js/453.f8bb2471.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ebebdc3b.css",
+    "static/js/main.db5bdbe2.js"
+  ]
+}
