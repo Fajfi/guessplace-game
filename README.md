@@ -1,1 +1,1 @@
-🌍 Guess the Country build with help of Cursor AI
+🌍 Guess the Country build with the help of Cursor AI https://www.cursor.com/
