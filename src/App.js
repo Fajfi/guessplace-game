@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import './App.css';
 import { CSSTransition } from 'react-transition-group';
 
@@ -40,24 +40,45 @@ const getRandomLocation = () => {
   };
 };
 
-const GuessInput = memo(({ onGuess }) => {
-  const [inputValue, setInputValue] = useState('');
+const GuessInput = memo(({ onGuess, correctCountry, otherCountries }) => {
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   const handleSubmit = useCallback(() => {
-    onGuess(inputValue);
-    setInputValue('');
-  }, [inputValue, onGuess]);
+    if (selectedAnswer !== null) {
+      onGuess(selectedAnswer);
+      setSelectedAnswer(null);
+    }
+  }, [selectedAnswer, onGuess]);
+
+  // Shuffle all answers together
+  const shuffledAnswers = useMemo(() => {
+    const allAnswers = [correctCountry, ...otherCountries];
+    return allAnswers.sort(() => Math.random() - 0.5);
+  }, [correctCountry, otherCountries]);
+
+  const answers = [
+    { label: 'a)', country: shuffledAnswers[0] },
+    { label: 'b)', country: shuffledAnswers[1] },
+    { label: 'c)', country: shuffledAnswers[2] },
+    { label: 'd)', country: shuffledAnswers[3] }
+  ];
 
   return (
     <div className="guess-container">
-      <input
-        type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        placeholder="Enter country name"
-        className="game-input"
-      />
-      <button className="game-button full-width" onClick={handleSubmit}>Submit Guess</button>
+      <div className="answer-options">
+        {answers.map((answer, index) => (
+          <button
+            key={index}
+            className={`answer-button ${selectedAnswer === answer.country ? 'selected' : ''}`}
+            onClick={() => setSelectedAnswer(answer.country)}
+          >
+            <span className="answer-label">{answer.label}</span> {answer.country}
+          </button>
+        ))}
+      </div>
+      <button className="game-button full-width" onClick={handleSubmit} disabled={selectedAnswer === null}>
+        Submit Guess
+      </button>
     </div>
   );
 });
@@ -83,10 +104,15 @@ function App() {
   const [result, setResult] = useState('');
   const [view, setView] = useState('menu');
   const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [isGameActive, setIsGameActive] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [username, setUsername] = useState('');
   const [menuLocation, setMenuLocation] = useState(null);
+  const [otherCountries, setOtherCountries] = useState([]);
+  const [summaryLink, setSummaryLink] = useState('');
+  const [showSummary, setShowSummary] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(300); // Default 5 minutes
 
   useEffect(() => {
     setLocation(getRandomLocation());
@@ -100,35 +126,70 @@ function App() {
     }
   }, [menuLocation]);
 
+  useEffect(() => {
+    if (location) {
+      const availableCountries = locations.map(loc => loc.country).filter(country => country !== location.country);
+      const shuffled = availableCountries.sort(() => 0.5 - Math.random());
+      const selectedOtherCountries = shuffled.slice(0, 3);
+      const allOptions = [location.country, ...selectedOtherCountries];
+      const shuffledOptions = allOptions.sort(() => 0.5 - Math.random());
+      setOtherCountries(shuffledOptions.filter(country => country !== location.country));
+    }
+  }, [location]);
+
+  useEffect(() => {
+    let timer;
+    if (isGameActive && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(time => time - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setView('gameOver');
+    }
+    return () => clearInterval(timer);
+  }, [isGameActive, timeLeft]);
+
   const loadLeaderboard = () => {
     const storedLeaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
     setLeaderboard(storedLeaderboard);
   };
 
   const saveScore = (newScore, playerName) => {
-    const updatedLeaderboard = [...leaderboard, { name: playerName, date: new Date().toLocaleString() }]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 10); // Keep only top 10 recent entries
+    const updatedLeaderboard = [...leaderboard, { name: playerName, score: newScore, date: new Date().toLocaleString() }]
+      .sort((a, b) => b.score - a.score || new Date(b.date) - new Date(a.date))
+      .slice(0, 10); // Keep only top 10 entries
 
     setLeaderboard(updatedLeaderboard);
     localStorage.setItem('leaderboard', JSON.stringify(updatedLeaderboard));
   };
 
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
   const handleGuess = useCallback((guess) => {
-    if (guess.toLowerCase() === location.country.toLowerCase()) {
+    const isCorrect = guess === location.country;
+    const streetViewLink = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${location.lat},${location.lng}`;
+    
+    if (isCorrect) {
       setResult('Correct!');
       setScore(prevScore => prevScore + 1);
     } else {
       setResult(`Wrong! The correct answer was ${location.country}.`);
-      setLives(prevLives => prevLives - 1);
-      if (lives === 1) {
-        // Game over
-        setView('gameOver');
-        return;
-      }
     }
+    
+    setSummaryLink(streetViewLink);
+    setShowSummary(true);
+  }, [location]);
+
+  const handleNextLocation = () => {
+    setResult('');
+    setSummaryLink('');
+    setShowSummary(false);
     setLocation(getRandomLocation());
-  }, [location, lives, score]);
+  };
 
   const handleSaveScore = () => {
     if (username.trim() && score > 0) {
@@ -142,14 +203,22 @@ function App() {
 
   const startGame = () => {
     setScore(0);
-    setLives(3);
+    setTimeLeft(selectedTime); // Use the selected time
     setLocation(getRandomLocation());
-    setMenuLocation(null); // Reset menu location
+    setMenuLocation(null);
     setView('game');
+    setIsGameActive(true);
   };
 
   const goToMenu = () => {
     setView('menu');
+  };
+
+  const handleTimeChange = (e) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value > 0) {
+      setSelectedTime(value * 60); // Convert minutes to seconds
+    }
   };
 
   const renderMenu = () => {
@@ -161,21 +230,22 @@ function App() {
 
     return (
       <div className="fullscreen game-background">
-        <div className="menu-street-view">
-          <iframe
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            style={{ border: 0 }}
-            src={`https://www.google.com/maps/embed?pb=!4v1616426339741!6m8!1m7!1sCAoSLEFGMVFpcE5QTzNJNVlkNHRsRDJoTFdjX3ZGQkJhbkNMLXpEYTNGS0xKVFE3!2m2!1d${menuLocation.lat}!2d${menuLocation.lng}!3f${randomBearing}!4f0!5f0.8160813932612223&disableDefaultUI=1&scrollwheel=0&draggable=0`}
-            allowFullScreen
-          ></iframe>
-        </div>
         <h1 className="game-title">
           <span className="world-icon">🌍</span> Guess the Country
         </h1>
         <div className="content-container menu-container">
           <div className="button-container">
+            <div className="timer-selection">
+              <label htmlFor="game-timer">Game Duration (minutes):</label>
+              <input
+                id="game-timer"
+                type="number"
+                min="1"
+                value={selectedTime / 60}
+                onChange={handleTimeChange}
+                className="game-input timer-input"
+              />
+            </div>
             <button onClick={startGame} className="game-button pulse">New Game</button>
             <button onClick={() => setView('leaderboard')} className="game-button">Leaderboard</button>
             <button onClick={() => setView('about')} className="game-button">About</button>
@@ -192,11 +262,23 @@ function App() {
         <div className="game-ui floating">
           <div className="game-stats">
             <span>Score: {score}</span>
-            <span className="lives">{Array(lives).fill('💛').join(' ')}</span>
+            <span className="timer">{formatTime(timeLeft)}</span>
           </div>
-          <h2 className="section-title"><span className="world-icon">🌍</span>Guess the Country</h2>
-          <GuessInput onGuess={handleGuess} />
-          {result && <p className="result">{result}</p>}
+          {!showSummary ? (
+            <GuessInput onGuess={handleGuess} correctCountry={location.country} otherCountries={otherCountries} />
+          ) : (
+            <div className="result-summary">
+              <p className="result">{result}</p>
+              <div className="summary-buttons">
+                <button className="game-button" onClick={handleNextLocation}>Next Location</button>
+                {summaryLink && (
+                  <a href={summaryLink} target="_blank" rel="noopener noreferrer" className="game-button street-view-button">
+                    Street View
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </CSSTransition>
     </div>
@@ -238,6 +320,7 @@ function App() {
               <tr>
                 <th>Rank</th>
                 <th>Name</th>
+                <th>Score</th>
                 <th>Date</th>
               </tr>
             </thead>
@@ -246,6 +329,7 @@ function App() {
                 <tr key={index}>
                   <td>{index + 1}</td>
                   <td>{entry.name}</td>
+                  <td>{entry.score}</td>
                   <td>{entry.date}</td>
                 </tr>
               ))}
@@ -261,7 +345,7 @@ function App() {
     <div className="fullscreen game-background">
       <div className="content-container">
         <h2 className="section-title">About</h2>
-        <p className="game-text">Guess the Country is a game where you guess the country based on a Google Street View image.</p>
+        <p className="game-text">Guess the Country is a game where you guess the country based on a Google Street View image. Test your geography knowledge and explore the world!</p>
         <button className="game-button" onClick={goToMenu}>Back to Menu</button>
       </div>
     </div>
